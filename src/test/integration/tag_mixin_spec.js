@@ -149,6 +149,7 @@ describe(testName, function () {
                         expect(parsed._links.uris[index]).toBe(uri);
                     });
                 } else {
+                    console.log('DEBUG:', parsed);
                     expect(parsed._links).toBe(true);
                 }
 
@@ -180,6 +181,7 @@ describe(testName, function () {
                         expect(uri).toBe(uris[index + 1]);
                     });
                 } else {
+                    console.log('DEBUG:', parsed);
                     expect(parsed._links).toBe(true);
                 }
                 done();
@@ -201,6 +203,7 @@ describe(testName, function () {
                         expect(uri).toBe(uris[index]);
                     });
                 } else {
+                    console.log('DEBUG:', parsed);
                     expect(parsed._links).toBe(true);
                 }
 
@@ -223,6 +226,7 @@ describe(testName, function () {
                         expect(uri).toBe(uris[index + 1]);
                     });
                 } else {
+                    console.log('DEBUG:', parsed);
                     expect(parsed._links).toBe(true);
                 }
                 done();
@@ -243,6 +247,7 @@ describe(testName, function () {
                         expect(uri).toBe(uris[index]);
                     });
                 } else {
+                    console.log('DEBUG:', parsed);
                     expect(parsed._links).toBe(true);
                 }
 
@@ -275,6 +280,7 @@ describe(testName, function () {
                         expect(uri).toBe(uris[index]);
                     });
                 } else {
+                    console.log('DEBUG:', parsed);
                     expect(parsed._links).toBe(true);
                 }
                 done();
@@ -306,6 +312,7 @@ describe(testName, function () {
                         expect(uri).toBe(uris[index]);
                     });
                 } else {
+                    console.log('DEBUG:', parsed);
                     expect(parsed._links).toBe(true);
                 }
                 done();
@@ -327,6 +334,7 @@ describe(testName, function () {
                         expect(uri).toBe(uris[index]);
                     });
                 } else {
+                    console.log('DEBUG:', parsed);
                     expect(parsed._links).toBe(true);
                 }
                 done();
