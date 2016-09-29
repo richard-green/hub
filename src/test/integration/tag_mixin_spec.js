@@ -84,7 +84,7 @@ describe(testName, function () {
         url = url.trim();
         console.log(' traverse ' + url + ' ' + testName);
         request.get({
-                url: url
+                url: url + '&trace=true'
             },
             function (err, response, body) {
                 expect(err).toBeNull();
