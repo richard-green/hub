@@ -25,7 +25,9 @@ public class TagService {
     private ChannelService channelService;
 
     public Iterable<ChannelConfig> getChannels(String tag) {
-        return channelService.getChannels(tag);
+        Collection<ChannelConfig> channelConfigs = channelService.getChannels(tag);
+        ActiveTraces.getLocal().add("TagService.getChannels", channelConfigs);
+        return channelConfigs;
     }
 
     public Iterable<String> getTags() {
@@ -49,9 +51,9 @@ public class TagService {
         SortedSet<ChannelContentKey> orderedKeys = Collections.synchronizedSortedSet(new TreeSet<>());
         Traces traces = ActiveTraces.getLocal();
         for (ChannelConfig channel : channels) {
-            traces.add("query for channel", channel.getName());
+            traces.add("TagService.getKeys", channel.getName());
             Collection<ContentKey> contentKeys = channelService.getKeys(query.withChannelName(channel.getName()));
-            traces.add("query size for channel", channel.getName(), contentKeys.size());
+            traces.add("TagService.getKeys size", channel.getName(), contentKeys.size());
             for (ContentKey contentKey : contentKeys) {
                 orderedKeys.add(new ChannelContentKey(channel.getName(), contentKey));
             }
