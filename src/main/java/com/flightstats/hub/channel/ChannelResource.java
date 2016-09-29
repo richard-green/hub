@@ -82,7 +82,7 @@ public class ChannelResource {
                     .build();
         }
         logger.info("creating channel {} {}", channelConfig, channelConfig.getCreationDate().getTime());
-        channelConfig = channelService.updateChannel(channelConfig, oldConfig);
+        channelConfig = channelService.updateChannel(channelConfig, oldConfig, LocalHostOnly.isLocalhost(uriInfo));
         URI channelUri = LinkBuilder.buildChannelUri(channelConfig, uriInfo);
         return Response.created(channelUri).entity(
                 LinkBuilder.buildChannelLinks(channelConfig, channelUri))
@@ -105,7 +105,7 @@ public class ChannelResource {
                 .withUpdateJson(json)
                 .build();
 
-        newConfig = channelService.updateChannel(newConfig, oldConfig);
+        newConfig = channelService.updateChannel(newConfig, oldConfig, LocalHostOnly.isLocalhost(uriInfo));
 
         URI channelUri = LinkBuilder.buildChannelUri(newConfig, uriInfo);
         Linked<ChannelConfig> linked = LinkBuilder.buildChannelLinks(newConfig, channelUri);
@@ -138,7 +138,7 @@ public class ChannelResource {
             Response.ResponseBuilder builder = Response.status(Response.Status.CREATED);
             builder.entity(linkedResult);
             builder.location(payloadUri);
-            ActiveTraces.getLocal().logSlow(1000, logger);
+            ActiveTraces.getLocal().log(1000, false, logger);
             long time = System.currentTimeMillis() - start;
             int postTimeBuffer = ntpMonitor.getPostTimeBuffer();
             if (time < postTimeBuffer) {
@@ -238,18 +238,28 @@ public class ChannelResource {
 
     @DELETE
     public Response delete(@PathParam("channel") final String channelName) throws Exception {
-        if (HubProperties.getProperty("hub.allow.channel.deletion", false)) {
-            return deletion(channelName);
+        ChannelConfig channelConfig = channelService.getChannelConfig(channelName, false);
+        if (channelConfig == null) {
+            return notFound(channelName);
         }
-        return LocalHostOnly.getResponse(uriInfo, () -> deletion(channelName));
+        if (HubProperties.isProtected() || channelConfig.isProtect()) {
+            logger.info("using localhost only to delete {}", channelName);
+            return LocalHostOnly.getResponse(uriInfo, () -> deletion(channelName));
+        }
+        logger.info("using normal delete {}", channelName);
+        return deletion(channelName);
     }
 
-    private Response deletion(@PathParam("channel") String channelName) {
+    public static Response deletion(@PathParam("channel") String channelName) {
         if (channelService.delete(channelName)) {
             return Response.status(Response.Status.ACCEPTED).build();
         } else {
-            return Response.status(Response.Status.NOT_FOUND).entity("channel " + channelName + " not found").build();
+            return notFound(channelName);
         }
+    }
+
+    public static Response notFound(@PathParam("channel") String channelName) {
+        return Response.status(Response.Status.NOT_FOUND).entity("channel " + channelName + " not found").build();
     }
 
 }

@@ -38,7 +38,7 @@ public class TracesFilter implements ContainerRequestFilter, ContainerResponseFi
             }
         }
         Thread thread = Thread.currentThread();
-        if (!ActiveTraces.end()) {
+        if (!ActiveTraces.end(trace)) {
             logger.debug("unable to end trace for {}", requestUri);
         }
         thread.setName(StringUtils.substringBefore(thread.getName(), "|"));
@@ -47,9 +47,10 @@ public class TracesFilter implements ContainerRequestFilter, ContainerResponseFi
     @Override
     public void filter(ContainerRequestContext request) throws IOException {
         URI requestUri = request.getUriInfo().getRequestUri();
-        logger.trace("incoming {} {}", request.getMethod(), requestUri);
+        String ipAddress = request.getHeaders().getFirst("X-Forwarded-For");
+        logger.trace("incoming {} {} {}", requestUri, request.getMethod(), ipAddress);
         Thread thread = Thread.currentThread();
         thread.setName(thread.getName() + "|" + request.getMethod() + "|" + requestUri);
-        ActiveTraces.start(requestUri, request.getMethod(), request.getHeaders().getFirst("X-Forwarded-For"));
+        ActiveTraces.start(requestUri, request.getMethod(), ipAddress);
     }
 }

@@ -25,7 +25,7 @@ public class TagService {
     private ChannelService channelService;
 
     public Iterable<ChannelConfig> getChannels(String tag) {
-        Collection<ChannelConfig> channelConfigs = channelService.getChannels(tag);
+        Collection<ChannelConfig> channelConfigs = channelService.getChannels(tag, true);
         ActiveTraces.getLocal().add("TagService.getChannels", channelConfigs);
         return channelConfigs;
     }
