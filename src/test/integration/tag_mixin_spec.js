@@ -14,13 +14,14 @@ var channelBody = {
 
 /**
  * This should:
- * Create ChannelA with tag TagA
- * Create ChannelB with tag TagA
  *
- * Add data to channel
- * Add data to channelB
+ * - Create ChannelA with TagA
+ * - Create ChannelB with TagA
+ * - Add data to ChannelA
+ * - Add data to ChannelB
+ * - Add data to ChannelA
  *
- * verify that tag time query can get data back out
+ * - Verify that tag time query can get data back out
  *
  */
 describe(testName, function () {
