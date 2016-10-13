@@ -6,6 +6,7 @@ import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.model.BulkContent;
 import com.flightstats.hub.model.Content;
 import com.flightstats.hub.model.ContentKey;
+import com.flightstats.hub.time.TimeService;
 import com.flightstats.hub.util.ByteRing;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -33,12 +34,12 @@ public class MultiPartParser {
         baos = new ByteArrayOutputStream();
     }
 
-    public void parse() throws IOException {
+    public void parse(TimeService timeService) throws IOException {
         parseItems();
         if (bulkContent.getItems().isEmpty()) {
             throw new InvalidRequestException("multipart has no items");
         } else if (bulkContent.isNew()) {
-            ContentKey masterKey = new ContentKey();
+            ContentKey masterKey = new ContentKey(timeService.getNow());
             bulkContent.setMasterKey(masterKey);
             for (int i = 0; i < bulkContent.getItems().size(); i++) {
                 bulkContent.getItems().get(i).setContentKey(ContentKey.bulkKey(masterKey, i));

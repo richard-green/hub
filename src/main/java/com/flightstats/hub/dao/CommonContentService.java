@@ -8,6 +8,7 @@ import com.flightstats.hub.exception.FailedQueryException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
+import com.flightstats.hub.time.TimeService;
 import com.flightstats.hub.util.RuntimeInterruptedException;
 import com.flightstats.hub.util.Sleeper;
 import com.google.common.base.Optional;
@@ -40,10 +41,11 @@ public class CommonContentService implements ContentService {
     private final AtomicInteger inFlight = new AtomicInteger();
     private static final ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("ContentService-%d").build());
 
-    //todo gfm - this needs to be more sophisticated to handle multiple ContentService in a hub instance
     @Inject
     @Named(ContentService.IMPL)
     private ContentService contentService;
+    @Inject
+    private TimeService timeService;
 
     public CommonContentService() {
         HubServices.registerPreStop(new CommonContentServiceShutdown());
@@ -96,7 +98,7 @@ public class CommonContentService implements ContentService {
     public Collection<ContentKey> insert(BulkContent bulkContent) throws Exception {
         return inFlight(Errors.rethrow().wrap(() -> {
             MultiPartParser multiPartParser = new MultiPartParser(bulkContent);
-            multiPartParser.parse();
+            multiPartParser.parse(timeService);
             return contentService.insert(bulkContent);
         }));
     }

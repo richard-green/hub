@@ -64,7 +64,7 @@ public class TimeService {
         return TimeUtil.now();
     }
 
-    public DateTime getRemoteNow() {
+    DateTime getRemoteNow() {
         for (String server : cluster.getRandomRemoteServers()) {
             ClientResponse response = null;
             try {
