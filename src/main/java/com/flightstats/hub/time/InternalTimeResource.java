@@ -48,7 +48,7 @@ public class InternalTimeResource {
         addLink(links, "local", uri + "/local");
         addLink(links, "remote", uri + "/remote");
 
-        root.put("remote", timeService.isRemote());
+        //root.put("remote", timeService.isRemote());
 
         return Response.ok(root).build();
     }
@@ -61,9 +61,9 @@ public class InternalTimeResource {
     @GET
     @Path("/millis")
     public Response getMillis() {
-        if (timeService.isRemote()) {
+        /*if (timeService.isRemote()) {
             return Response.status(521).build();
-        }
+        }*/
         return Response.ok(TimeUtil.now().getMillis()).build();
     }
 
@@ -75,7 +75,8 @@ public class InternalTimeResource {
 
     private Response setRemote(boolean remote) throws Exception {
         return LocalHostOnly.getResponse(uriInfo, () -> {
-            timeService.setRemote(remote);
+            //todo gfm -
+            //timeService.setRemote(remote);
             return Response.ok().build();
         });
     }

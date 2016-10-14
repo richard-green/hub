@@ -18,7 +18,7 @@ public class SingleHubMain {
         HubProperties.setProperty("app.environment", "single");
 
         setProperty("zookeeper.connection", "localhost:2181");
-        setProperty("runSingleZookeeperInternally", "singleNode");
+        //setProperty("runSingleZookeeperInternally", "singleNode");
         setProperty("app.lib_path", "");
         setProperty("alert.run", "true");
         setProperty("app.url", "http://localhost:8080/");
@@ -28,8 +28,6 @@ public class SingleHubMain {
         String spokePath = Files.createTempDir().getAbsolutePath();
         setProperty("spoke.path", spokePath);
         setProperty("app.stable_seconds", "2");
-        //todo gfm - do we need this?
-        setProperty("app.remoteTimeFile", storagePath + "/remoteTime");
         setProperty("hub.protect.channels", "false");
         setProperty("app.runNtpMonitor", "false");
 

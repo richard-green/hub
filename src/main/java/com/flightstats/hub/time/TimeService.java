@@ -1,11 +1,14 @@
 package com.flightstats.hub.time;
 
 import com.flightstats.hub.app.HubHost;
-import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.app.HubServices;
 import com.flightstats.hub.cluster.CuratorCluster;
+import com.flightstats.hub.cluster.CuratorLeader;
+import com.flightstats.hub.cluster.Leader;
+import com.flightstats.hub.cluster.Leadership;
 import com.flightstats.hub.rest.RestClient;
 import com.flightstats.hub.spoke.RemoteSpokeStore;
+import com.flightstats.hub.util.Sleeper;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -14,14 +17,11 @@ import com.google.inject.name.Named;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
-import org.apache.commons.io.FileUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
 import java.net.ConnectException;
 
 @Singleton
@@ -29,31 +29,20 @@ public class TimeService {
 
     private final static Logger logger = LoggerFactory.getLogger(TimeService.class);
 
-    private final String remoteFile = HubProperties.getProperty("app.remoteTimeFile", "/home/hub/remoteTime");
     private final static Client client = RestClient.createClient(1, 5, true, false);
+    private final TimeServiceRegister service;
 
     @Inject
     @Named("HubCuratorCluster")
     private CuratorCluster cluster;
 
-    private boolean isRemote = false;
-
     public TimeService() {
-        HubServices.register(new TimeServiceRegister());
-    }
-
-    public void setRemote(boolean remote) {
-        isRemote = remote;
-        logger.info("remote {}", remote);
-        if (isRemote) {
-            createFile();
-        } else {
-            deleteFile();
-        }
+        service = new TimeServiceRegister();
+        HubServices.register(service);
     }
 
     public DateTime getNow() {
-        if (!isRemote) {
+        if (service.leadership.hasLeadership()) {
             return TimeUtil.now();
         }
         DateTime millis = getRemoteNow();
@@ -65,6 +54,8 @@ public class TimeService {
     }
 
     DateTime getRemoteNow() {
+        //todo gfm - this should only call the leader.  how do we know who the leader is?
+
         for (String server : cluster.getRandomRemoteServers()) {
             ClientResponse response = null;
             try {
@@ -90,41 +81,28 @@ public class TimeService {
         return null;
     }
 
-    private void deleteFile() {
-        File file = new File(remoteFile);
-        if (file.exists()) {
-            file.delete();
-        }
-        logger.info("deleted file " + remoteFile);
-    }
+    private class TimeServiceRegister extends AbstractIdleService implements Leader {
 
-    private void createFile() {
-        try {
-            File file = new File(remoteFile);
-            FileUtils.write(file, "true");
-            logger.info("wrote file " + remoteFile);
-        } catch (IOException e) {
-            logger.warn("unable to write file", e);
-            throw new RuntimeException("unable to write remoteFile " + remoteFile);
-        }
-    }
-
-    public boolean isRemote() {
-        return isRemote;
-    }
-
-    private class TimeServiceRegister extends AbstractIdleService {
+        private static final String leaderPath = "/TimeLeader";
+        private Leadership leadership;
 
         @Override
         protected void startUp() throws Exception {
-            File file = new File(remoteFile);
-            isRemote = file.exists();
-            logger.info("calibrating state {} for {}", isRemote, remoteFile);
+            CuratorLeader curatorLeader = new CuratorLeader(leaderPath, this);
+            curatorLeader.start();
         }
 
         @Override
         protected void shutDown() throws Exception {
-            //do anything?
+            //do nothing
+        }
+
+        @Override
+        public void takeLeadership(Leadership leadership) {
+            logger.info("taking leadership");
+            this.leadership = leadership;
+            Sleeper.sleep(Long.MAX_VALUE);
+            logger.info("lost leadership");
         }
     }
 }

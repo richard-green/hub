@@ -1,6 +1,7 @@
 package com.flightstats.hub.dao.aws;
 
 import com.flightstats.hub.app.HubProperties;
+import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.exception.ContentTooLargeException;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.model.BulkContent;
@@ -26,6 +27,7 @@ public class MultiPartParser {
     private Content.Builder builder;
     private final ByteArrayOutputStream baos;
     private static final byte[] CRLF = "\r\n".getBytes();
+    private static final TimeService timeService = HubProvider.getInstance(TimeService.class);
 
     public MultiPartParser(BulkContent bulkContent) {
         this.bulkContent = bulkContent;
@@ -34,7 +36,7 @@ public class MultiPartParser {
         baos = new ByteArrayOutputStream();
     }
 
-    public void parse(TimeService timeService) throws IOException {
+    public void parse() throws IOException {
         parseItems();
         if (bulkContent.getItems().isEmpty()) {
             throw new InvalidRequestException("multipart has no items");
