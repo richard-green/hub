@@ -7,8 +7,7 @@ import com.flightstats.hub.cluster.CuratorLeader;
 import com.flightstats.hub.cluster.Leader;
 import com.flightstats.hub.cluster.Leadership;
 import com.flightstats.hub.rest.RestClient;
-import com.flightstats.hub.spoke.RemoteSpokeStore;
-import com.flightstats.hub.util.Sleeper;
+import com.flightstats.hub.util.HubUtils;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -54,8 +53,6 @@ public class TimeService {
     }
 
     DateTime getRemoteNow() {
-        //todo gfm - this should only call the leader.  how do we know who the leader is?
-
         for (String server : cluster.getRandomRemoteServers()) {
             ClientResponse response = null;
             try {
@@ -75,7 +72,7 @@ public class TimeService {
             } catch (Exception e) {
                 logger.warn("unable to get time " + server, e);
             } finally {
-                RemoteSpokeStore.close(response);
+                HubUtils.close(response);
             }
         }
         return null;
