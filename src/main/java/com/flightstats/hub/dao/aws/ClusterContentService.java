@@ -67,6 +67,7 @@ public class ClusterContentService implements ContentService {
 
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
+        SpokeContentHandler.handle(content);
         ContentKey key = spokeContentDao.insert(channelName, content);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
         if (channel.isSingle() || channel.isBoth()) {
@@ -102,6 +103,7 @@ public class ClusterContentService implements ContentService {
 
     @Override
     public boolean historicalInsert(String channelName, Content content) throws Exception {
+        SpokeContentHandler.handle(content);
         s3SingleContentDao.insertHistorical(channelName, content);
         return true;
     }

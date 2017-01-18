@@ -3,6 +3,7 @@ package com.flightstats.hub.dao.file;
 import com.flightstats.hub.dao.ContentKeyUtil;
 import com.flightstats.hub.dao.ContentMarshaller;
 import com.flightstats.hub.dao.ContentService;
+import com.flightstats.hub.dao.SpokeContentHandler;
 import com.flightstats.hub.exception.FailedWriteException;
 import com.flightstats.hub.metrics.ActiveTraces;
 import com.flightstats.hub.metrics.Traces;
@@ -36,6 +37,11 @@ public class SingleContentService implements ContentService {
 
     @Override
     public ContentKey insert(String channelName, Content content) throws Exception {
+        SpokeContentHandler.handle(content);
+        return internalPackaged(channelName, content);
+    }
+
+    private ContentKey internalPackaged(String channelName, Content content) {
         ContentKey key = content.getContentKey().get();
         String path = getPath(channelName, content.getContentKey().get());
         if (!fileSpokeStore.insert(path, content.getData())) {
@@ -51,13 +57,14 @@ public class SingleContentService implements ContentService {
         for (Content content : bulkContent.getItems()) {
             logger.info("inserting item key {}", content.getContentKey().get());
             content.packageStream();
-            keys.add(insert(bulkContent.getChannel(), content));
+            keys.add(internalPackaged(bulkContent.getChannel(), content));
         }
         return keys;
     }
 
     @Override
     public boolean historicalInsert(String channelName, Content content) throws Exception {
+        SpokeContentHandler.handle(content);
         insert(channelName, content);
         return true;
     }

@@ -37,6 +37,8 @@ public class LocalChannelService implements ChannelService {
 
     private final static Logger logger = LoggerFactory.getLogger(LocalChannelService.class);
     private static final int DIR_COUNT_LIMIT = HubProperties.getProperty("app.directionCountLimit", 10000);
+
+    //todo - gfm - choose the ContentService based on channel strategy
     @Inject
     private ContentService contentService;
     @Inject
@@ -105,21 +107,11 @@ public class LocalChannelService implements ChannelService {
             throw new ForbiddenRequestException(channelName + " cannot modified while replicating");
         }
         long start = System.currentTimeMillis();
-        ContentKey contentKey = insertInternal(channelName, content);
-        metricsService.insert(channelName, start, Insert.single, 1, content.getSize());
-        return contentKey;
-    }
-
-    private ContentKey insertInternal(String channelName, Content content) throws Exception {
-        return inFlightService.inFlight(() -> {
+        ContentKey contentKey = inFlightService.inFlight(() -> {
             Traces traces = ActiveTraces.getLocal();
             traces.add("ContentService.insert");
             try {
-                content.packageStream();
-                traces.add("ContentService.insert marshalled");
-                ContentKey key = content.keyAndStart(timeService.getNow());
-                logger.trace("writing key {} to channel {}", key, channelName);
-                contentService.insert(channelName, content);
+                ContentKey key = contentService.insert(channelName, content);
                 traces.add("ContentService.insert end", key);
                 return key;
             } catch (ContentTooLargeException e) {
@@ -131,6 +123,8 @@ public class LocalChannelService implements ChannelService {
                 throw e;
             }
         });
+        metricsService.insert(channelName, start, Insert.single, 1, content.getSize());
+        return contentKey;
     }
 
     @Override
@@ -147,15 +141,13 @@ public class LocalChannelService implements ChannelService {
             logger.warn(msg);
             throw new InvalidRequestException(msg);
         }
-        boolean insert = inFlightService.inFlight(() -> {
-            content.packageStream();
-            return contentService.historicalInsert(channelName, content);
-        });
+        boolean insert = inFlightService.inFlight(() -> contentService.historicalInsert(channelName, content));
         lastContentPath.updateDecrease(contentKey, channelName, HISTORICAL_EARLIEST);
         metricsService.insert(channelName, start, Insert.historical, 1, content.getSize());
         return insert;
     }
 
+    //todo - gfm - not sure bulk is needed for remote
     @Override
     public Collection<ContentKey> insert(BulkContent bulkContent) throws Exception {
         String channel = bulkContent.getChannel();
