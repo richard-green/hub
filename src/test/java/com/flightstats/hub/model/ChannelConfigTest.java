@@ -34,7 +34,7 @@ public class ChannelConfigTest {
         assertEquals("", config.getDescription());
         assertTrue(config.getTags().isEmpty());
         assertEquals("", config.getReplicationSource());
-        assertEquals("SINGLE", config.getStorage());
+        assertEquals("SINGLE", config.getStrategy());
         assertEquals(null, config.getGlobal());
         assertEquals(null, config.getMutableTime());
     }
@@ -94,7 +94,7 @@ public class ChannelConfigTest {
         ChannelConfig config = ChannelConfig.builder().storage("BOTH").build();
         // TODO: what is this copy attempting to test?
         ChannelConfig copy = config.toBuilder().build();
-        assertEquals("BOTH", copy.getStorage());
+        assertEquals("BOTH", copy.getStrategy());
         assertTrue(config.equals(copy));
     }
 

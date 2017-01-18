@@ -61,8 +61,8 @@ public class LinkBuilder {
         root.put("owner", config.getOwner());
         root.put("protect", config.isProtect());
         root.put("replicationSource", config.getReplicationSource());
-        root.put("storage", config.getStorage());
-        root.put("strategy", config.getStorage());
+        root.put("storage", config.getStrategy());
+        root.put("strategy", config.getStrategy());
         ArrayNode tags = root.putArray("tags");
         config.getTags().forEach(tags::add);
         root.put("ttlDays", config.getTtlDays());
@@ -81,9 +81,7 @@ public class LinkBuilder {
     }
 
     static Linked<?> buildLinks(UriInfo uriInfo, Map<String, URI> nameToUriMap, String name) {
-        return buildLinks(nameToUriMap, name, builder -> {
-            builder.withLink("self", uriInfo.getRequestUri());
-        });
+        return buildLinks(nameToUriMap, name, builder -> builder.withLink("self", uriInfo.getRequestUri()));
     }
 
     public static Linked<?> buildLinks(Map<String, URI> nameToUriMap, String name, Consumer<Linked.Builder> consumer) {

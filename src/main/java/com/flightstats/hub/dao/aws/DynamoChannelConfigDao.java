@@ -52,8 +52,8 @@ public class DynamoChannelConfigDao implements Dao<ChannelConfig> {
         if (StringUtils.isNotEmpty(config.getOwner())) {
             item.put("owner", new AttributeValue(config.getOwner()));
         }
-        if (StringUtils.isNotEmpty(config.getStorage())) {
-            item.put("storage", new AttributeValue(config.getStorage()));
+        if (StringUtils.isNotEmpty(config.getStrategy())) {
+            item.put("storage", new AttributeValue(config.getStrategy()));
         }
         if (config.isGlobal()) {
             GlobalConfig global = config.getGlobal();

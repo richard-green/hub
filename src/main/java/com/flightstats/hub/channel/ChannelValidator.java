@@ -54,8 +54,8 @@ public class ChannelValidator {
             throw new ForbiddenRequestException("{\"error\": \"protect can not be switched from true.\"}");
         }
         if (config.isProtect()) {
-            if (!config.getStorage().equals(oldConfig.getStorage())) {
-                if (!config.getStorage().equals(ChannelConfig.BOTH)) {
+            if (!config.getStrategy().equals(oldConfig.getStrategy())) {
+                if (!config.getStrategy().equals(ChannelConfig.BOTH)) {
                     throw new ForbiddenRequestException("{\"error\": \"A channels storage is not allowed to remove a storage source in this environment\"}");
                 }
             }

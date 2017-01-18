@@ -96,6 +96,11 @@ public class ChannelConfig implements Serializable, NamedType {
         }
     }
 
+    //force access through strategy
+    private String getStorage() {
+        return storage;
+    }
+
     public String toJson() {
         return ChannelConfigFactory.toJson(this);
     }
