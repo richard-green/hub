@@ -62,6 +62,7 @@ public class LinkBuilder {
         root.put("protect", config.isProtect());
         root.put("replicationSource", config.getReplicationSource());
         root.put("storage", config.getStorage());
+        root.put("strategy", config.getStorage());
         ArrayNode tags = root.putArray("tags");
         config.getTags().forEach(tags::add);
         root.put("ttlDays", config.getTtlDays());

@@ -49,12 +49,13 @@ public class ChannelConfig implements Serializable, NamedType {
     private final Set<String> tags;
     private final String replicationSource;
     private final String storage;
+    private final String strategy;
     private final GlobalConfig global;
     private final boolean protect;
     private final DateTime mutableTime;
 
     private ChannelConfig(String name, String owner, Date creationDate, long ttlDays, long maxItems, String description,
-                          Set<String> tags, String replicationSource, String storage, GlobalConfig global,
+                          Set<String> tags, String replicationSource, String storage, String strategy, GlobalConfig global,
                           boolean protect, DateTime mutableTime) {
         this.name = StringUtils.trim(name);
         this.owner = StringUtils.trim(owner);
@@ -72,11 +73,16 @@ public class ChannelConfig implements Serializable, NamedType {
             this.maxItems = maxItems;
         }
 
-        if (isBlank(storage)) {
-            this.storage = SINGLE;
+        if (isBlank(strategy)) {
+            if (isBlank(storage)) {
+                this.strategy = SINGLE;
+            } else {
+                this.strategy = StringUtils.upperCase(storage);
+            }
         } else {
-            this.storage = StringUtils.upperCase(storage);
+            this.strategy = StringUtils.upperCase(strategy);
         }
+        this.storage = this.strategy;
 
         if (global != null) {
             this.global = global.cleanup();
@@ -129,7 +135,11 @@ public class ChannelConfig implements Serializable, NamedType {
         if (rootNode.has("maxItems")) builder.maxItems(rootNode.get("maxItems").asLong());
         if (rootNode.has("tags")) builder.tags(getSet(rootNode.get("tags")));
         if (rootNode.has("replicationSource")) builder.replicationSource(getString(rootNode.get("replicationSource")));
-        if (rootNode.has("storage")) builder.storage(getString(rootNode.get("storage")));
+        if (rootNode.has("strategy")) {
+            builder.strategy(getString(rootNode.get("strategy")));
+        } else if (rootNode.has("storage")) {
+            builder.strategy(getString(rootNode.get("storage")));
+        }
         if (rootNode.has("global")) builder.global(GlobalConfig.parseJson(rootNode.get("global")));
         if (rootNode.has("protect")) builder.protect(rootNode.get("protect").asBoolean());
         if (rootNode.has("mutableTime")) {
@@ -217,6 +227,7 @@ public class ChannelConfig implements Serializable, NamedType {
         private TreeSet<String> tags = new TreeSet<>();
         private String replicationSource = "";
         private String storage = "";
+        private String strategy = "";
         private boolean protect = HubProperties.isProtected();
 
         public ChannelConfigBuilder tags(List<String> tagList) {
