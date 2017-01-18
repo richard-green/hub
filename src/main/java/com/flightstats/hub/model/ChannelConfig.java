@@ -23,6 +23,7 @@ import java.util.stream.StreamSupport;
 
 import static com.flightstats.hub.model.BuiltInTag.*;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 @Value
 @Builder(toBuilder = true)
@@ -73,14 +74,12 @@ public class ChannelConfig implements Serializable, NamedType {
             this.maxItems = maxItems;
         }
 
-        if (isBlank(strategy)) {
-            if (isBlank(storage)) {
-                this.strategy = SINGLE;
-            } else {
-                this.strategy = StringUtils.upperCase(storage);
-            }
-        } else {
+        if (isNotBlank(strategy)) {
             this.strategy = StringUtils.upperCase(strategy);
+        } else if (isNotBlank(storage)) {
+            this.strategy = StringUtils.upperCase(storage);
+        } else {
+            this.strategy = SINGLE;
         }
         this.storage = this.strategy;
 
