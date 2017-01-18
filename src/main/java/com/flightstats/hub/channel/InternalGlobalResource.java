@@ -5,6 +5,7 @@ import com.flightstats.hub.app.HubProvider;
 import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.dao.LocalChannelService;
 import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.model.ChannelConfigFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,12 +54,12 @@ public class InternalGlobalResource {
         return create(channelName, json, false);
     }
 
-    private Response create(@PathParam("channel") String channelName, String json, boolean isMaster) throws IOException {
-        ChannelConfig newConfig = ChannelConfig.createFromJsonWithName(json, channelName);
+    private Response create(String channelName, String json, boolean isMaster) throws IOException {
+        ChannelConfig newConfig = ChannelConfigFactory.fromJson(json, channelName);
         ChannelConfig oldConfig = channelService.getChannelConfig(channelName, false);
         if (oldConfig != null) {
             logger.info("using existing channel {} {}", oldConfig, newConfig);
-            newConfig = ChannelConfig.updateFromJson(oldConfig, StringUtils.defaultIfBlank(json, "{}"));
+            newConfig = ChannelConfigFactory.fromJson(oldConfig, StringUtils.defaultIfBlank(json, "{}"));
         }
         newConfig.getGlobal().setIsMaster(isMaster);
         newConfig = channelService.updateChannel(newConfig, oldConfig, true);

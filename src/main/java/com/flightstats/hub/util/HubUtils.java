@@ -140,7 +140,7 @@ public class HubUtils {
             if (response.getStatus() >= 400) {
                 return null;
             } else {
-                return ChannelConfig.createFromJson(response.getEntity(String.class));
+                return ChannelConfigFactory.fromJson(response.getEntity(String.class));
             }
         } finally {
             HubUtils.close(response);

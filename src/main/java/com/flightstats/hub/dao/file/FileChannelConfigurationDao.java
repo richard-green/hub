@@ -2,6 +2,7 @@ package com.flightstats.hub.dao.file;
 
 import com.flightstats.hub.dao.Dao;
 import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.model.ChannelConfigFactory;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,12 +28,12 @@ public class FileChannelConfigurationDao implements Dao<ChannelConfig> {
 
     @Override
     public ChannelConfig get(String name) {
-        return FileUtil.readJson(channelPath, name, ChannelConfig::createFromJson);
+        return FileUtil.readJson(channelPath, name, ChannelConfigFactory::fromJson);
     }
 
     @Override
     public Collection<ChannelConfig> getAll(boolean useCache) {
-        return FileUtil.getIterable(channelPath, ChannelConfig::createFromJson);
+        return FileUtil.getIterable(channelPath, ChannelConfigFactory::fromJson);
     }
 
     @Override

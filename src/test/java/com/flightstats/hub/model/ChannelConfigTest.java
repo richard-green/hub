@@ -25,7 +25,7 @@ public class ChannelConfigTest {
 
     @Test
     public void testJsonDefaults() throws Exception {
-        assertDefaults(ChannelConfig.createFromJson("{\"name\": \"defaults\"}"));
+        assertDefaults(ChannelConfigFactory.fromJson("{\"name\": \"defaults\"}"));
     }
 
     private void assertDefaults(ChannelConfig config) {
@@ -135,7 +135,7 @@ public class ChannelConfigTest {
         assertEquals(globalConfig, copy.getGlobal());
         assertTrue(config.equals(copy));
 
-        ChannelConfig fromJson = ChannelConfig.createFromJson(config.toJson());
+        ChannelConfig fromJson = ChannelConfigFactory.fromJson(config.toJson());
         assertEquals(globalConfig, fromJson.getGlobal());
 
         GlobalConfig changedGlobal = new GlobalConfig();
@@ -143,7 +143,7 @@ public class ChannelConfigTest {
         changedGlobal.addSatellites(Arrays.asList("master", "sat2", "sat3"));
         ChannelConfig changedChannel = ChannelConfig.builder().global(changedGlobal).build();
 
-        ChannelConfig updated = ChannelConfig.updateFromJson(config, changedChannel.toJson());
+        ChannelConfig updated = ChannelConfigFactory.fromJson(config, changedChannel.toJson());
         assertEquals(changedGlobal, updated.getGlobal());
     }
 
@@ -155,10 +155,10 @@ public class ChannelConfigTest {
         assertEquals(mutableTime, channelConfig.getMutableTime());
 
         String json = channelConfig.toJson();
-        ChannelConfig updated = ChannelConfig.updateFromJson(defaults, json);
+        ChannelConfig updated = ChannelConfigFactory.fromJson(defaults, json);
         assertEquals(mutableTime, updated.getMutableTime());
 
-        ChannelConfig createdFromJson = ChannelConfig.createFromJson(updated.toJson());
+        ChannelConfig createdFromJson = ChannelConfigFactory.fromJson(updated.toJson());
         assertEquals(updated, createdFromJson);
 
     }

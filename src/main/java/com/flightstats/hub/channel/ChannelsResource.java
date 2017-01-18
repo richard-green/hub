@@ -6,6 +6,7 @@ import com.flightstats.hub.dao.ChannelService;
 import com.flightstats.hub.exception.ConflictException;
 import com.flightstats.hub.exception.InvalidRequestException;
 import com.flightstats.hub.model.ChannelConfig;
+import com.flightstats.hub.model.ChannelConfigFactory;
 import com.flightstats.hub.rest.Linked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +53,7 @@ public class ChannelsResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createChannel(String json) throws InvalidRequestException, ConflictException {
         logger.debug("post channel {}", json);
-        ChannelConfig channelConfig = ChannelConfig.createFromJson(json);
+        ChannelConfig channelConfig = ChannelConfigFactory.fromJson(json);
         channelConfig = channelService.createChannel(channelConfig);
         URI channelUri = LinkBuilder.buildChannelUri(channelConfig.getName(), uriInfo);
         ObjectNode output = buildChannelConfigResponse(channelConfig, uriInfo);
