@@ -12,7 +12,6 @@ import com.flightstats.hub.metrics.MetricsService.Insert;
 import com.flightstats.hub.metrics.Traces;
 import com.flightstats.hub.model.*;
 import com.flightstats.hub.replication.ReplicationGlobalManager;
-import com.flightstats.hub.time.TimeService;
 import com.flightstats.hub.util.TimeUtil;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
@@ -40,7 +39,11 @@ public class LocalChannelService implements ChannelService {
 
     //todo - gfm - choose the ContentService based on channel strategy
     @Inject
-    private ContentService contentService;
+    @Named(ContentService.SMALL_PAYLOAD)
+    private ContentService smallContentService;
+    @Inject
+    @Named(ContentService.LARGE_PAYLOAD)
+    private ContentService largeContentService;
     @Inject
     @Named("ChannelConfig")
     private Dao<ChannelConfig> channelConfigDao;
@@ -52,8 +55,6 @@ public class LocalChannelService implements ChannelService {
     private LastContentPath lastContentPath;
     @Inject
     private InFlightService inFlightService;
-    @Inject
-    private TimeService timeService;
     @Inject
     private MetricsService metricsService;
 
@@ -85,7 +86,8 @@ public class LocalChannelService implements ChannelService {
                 lastContentPath.update(lastKey, newConfig.getName(), HISTORICAL_EARLIEST);
             }
         }
-        contentService.notify(newConfig, oldConfig);
+        //todo - gfm - ???
+        smallContentService.notify(newConfig, oldConfig);
     }
 
     @Override
@@ -111,7 +113,7 @@ public class LocalChannelService implements ChannelService {
             Traces traces = ActiveTraces.getLocal();
             traces.add("ContentService.insert");
             try {
-                ContentKey key = contentService.insert(channelName, content);
+                ContentKey key = getContentService(channelName).insert(channelName, content);
                 traces.add("ContentService.insert end", key);
                 return key;
             } catch (ContentTooLargeException e) {
@@ -141,13 +143,13 @@ public class LocalChannelService implements ChannelService {
             logger.warn(msg);
             throw new InvalidRequestException(msg);
         }
-        boolean insert = inFlightService.inFlight(() -> contentService.historicalInsert(channelName, content));
+        //todo - gfm - ???
+        boolean insert = inFlightService.inFlight(() -> smallContentService.historicalInsert(channelName, content));
         lastContentPath.updateDecrease(contentKey, channelName, HISTORICAL_EARLIEST);
         metricsService.insert(channelName, start, Insert.historical, 1, content.getSize());
         return insert;
     }
 
-    //todo - gfm - not sure bulk is needed for remote
     @Override
     public Collection<ContentKey> insert(BulkContent bulkContent) throws Exception {
         String channel = bulkContent.getChannel();
@@ -158,7 +160,8 @@ public class LocalChannelService implements ChannelService {
         Collection<ContentKey> contentKeys = inFlightService.inFlight(() -> {
             MultiPartParser multiPartParser = new MultiPartParser(bulkContent);
             multiPartParser.parse();
-            return contentService.insert(bulkContent);
+            //todo - gfm - ???
+            return smallContentService.insert(bulkContent);
         });
         metricsService.insert(channel, start, Insert.bulk, bulkContent.getItems().size(), bulkContent.getSize());
         return contentKeys;
@@ -189,7 +192,7 @@ public class LocalChannelService implements ChannelService {
         }
         query = query.withStartKey(getLatestLimit(query.getChannelName(), query.isStable()));
         query = configureQuery(query);
-        Optional<ContentKey> latest = contentService.getLatest(query);
+        Optional<ContentKey> latest = getContentService(channel).getLatest(query);
         ActiveTraces.getLocal().add("before filter", channel, latest);
         if (latest.isPresent()) {
             SortedSet<ContentKey> filtered = ContentKeyUtil.filter(latest.asSet(), query);
@@ -216,7 +219,7 @@ public class LocalChannelService implements ChannelService {
 
     @Override
     public void deleteBefore(String name, ContentKey limitKey) {
-        contentService.deleteBefore(name, limitKey);
+        getContentService(name).deleteBefore(name, limitKey);
     }
 
     @Override
@@ -225,7 +228,7 @@ public class LocalChannelService implements ChannelService {
         if (request.getKey().getTime().isBefore(limitTime)) {
             return Optional.absent();
         }
-        return contentService.get(request.getChannel(), request.getKey());
+        return getContentService(request.getChannel()).get(request.getChannel(), request.getKey());
     }
 
     @Override
@@ -284,7 +287,7 @@ public class LocalChannelService implements ChannelService {
         query = query.withChannelConfig(getCachedChannelConfig(query.getChannelName()));
         ContentPath lastUpdated = getLastUpdated(query.getChannelName(), new ContentKey(TimeUtil.time(query.isStable())));
         query = query.withChannelStable(lastUpdated.getTime());
-        Stream<ContentKey> stream = contentService.queryByTime(query).stream();
+        Stream<ContentKey> stream = getContentService(query.getChannelName()).queryByTime(query).stream();
         stream = ContentKeyUtil.enforceLimits(query, stream);
         return stream.collect(Collectors.toCollection(TreeSet::new));
     }
@@ -295,7 +298,7 @@ public class LocalChannelService implements ChannelService {
             return Collections.emptySortedSet();
         }
         query = configureQuery(query);
-        List<ContentKey> keys = new ArrayList<>(contentService.queryDirection(query));
+        List<ContentKey> keys = new ArrayList<>(getContentService(query.getChannelName()).queryDirection(query));
         SortedSet<ContentKey> contentKeys = ContentKeyUtil.filter(keys, query);
         ActiveTraces.getLocal().add("ChannelService.query", contentKeys);
         return contentKeys;
@@ -342,7 +345,8 @@ public class LocalChannelService implements ChannelService {
 
     @Override
     public void get(String channel, SortedSet<ContentKey> keys, Consumer<Content> callback) {
-        contentService.get(channel, keys, callback);
+        //todo - gfm - ???
+        smallContentService.get(channel, keys, callback);
     }
 
     private DateTime getChannelLimitTime(String channelName) {
@@ -359,7 +363,7 @@ public class LocalChannelService implements ChannelService {
             return false;
         }
         ChannelConfig channelConfig = getCachedChannelConfig(channelName);
-        contentService.delete(channelName);
+        smallContentService.delete(channelName);
         channelConfigDao.delete(channelName);
         if (channelConfig.isReplicating()) {
             replicationGlobalManager.notifyWatchers();
@@ -374,7 +378,7 @@ public class LocalChannelService implements ChannelService {
         ChannelConfig channelConfig = getCachedChannelConfig(channelName);
         if (channelConfig.isHistorical()) {
             if (!contentKey.getTime().isAfter(channelConfig.getMutableTime())) {
-                contentService.delete(channelName, contentKey);
+                getContentService(channelName).delete(channelName, contentKey);
                 return true;
             }
         }
@@ -394,5 +398,13 @@ public class LocalChannelService implements ChannelService {
             return contentPath;
         }
         return defaultValue;
+    }
+
+    private ContentService getContentService(String channelName) {
+        ChannelConfig channel = getCachedChannelConfig(channelName);
+        if (channel.isLargePayload()) {
+            return largeContentService;
+        }
+        return smallContentService;
     }
 }

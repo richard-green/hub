@@ -9,10 +9,22 @@ import java.util.function.Consumer;
 
 public interface ContentService {
 
+    String SMALL_PAYLOAD = "SmallPayload";
+    String LARGE_PAYLOAD = "LargePayload";
+
+    /**
+     * content contains the raw InputStream
+     */
     ContentKey insert(String channelName, Content content) throws Exception;
 
+    /**
+     * bulkContent contains the raw InputStream
+     */
     Collection<ContentKey> insert(BulkContent bulkContent) throws Exception;
 
+    /**
+     * content contains the raw InputStream
+     */
     boolean historicalInsert(String channelName, Content content) throws Exception;
 
     Optional<Content> get(String channelName, ContentKey key);

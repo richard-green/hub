@@ -23,9 +23,12 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 @Builder(toBuilder = true)
 public class ChannelConfig implements Serializable, NamedType {
 
+    //todo - gfm - change to an enum
+    //todo - gfm - rename options - HighFrequency, Balanced, LARGE_PAYLOAD
     public static final String SINGLE = "SINGLE";
     public static final String BATCH = "BATCH";
     public static final String BOTH = "BOTH";
+    public static final String LARGE_PAYLOAD = "LARGE_PAYLOAD";
 
     private static final long serialVersionUID = 1L;
 
@@ -130,19 +133,23 @@ public class ChannelConfig implements Serializable, NamedType {
     }
 
     public boolean isValidStorage() {
-        return storage.equals(SINGLE) || storage.equals(BATCH) || storage.equals(BOTH);
+        return strategy.equals(SINGLE) || strategy.equals(BATCH) || strategy.equals(BOTH) || strategy.equals(LARGE_PAYLOAD);
     }
 
     public boolean isSingle() {
-        return storage.equals(SINGLE);
+        return strategy.equals(SINGLE);
     }
 
     public boolean isBatch() {
-        return storage.equals(BATCH);
+        return strategy.equals(BATCH);
     }
 
     public boolean isBoth() {
-        return storage.equals(BOTH);
+        return strategy.equals(BOTH);
+    }
+
+    public boolean isLargePayload() {
+        return strategy.equals(LARGE_PAYLOAD);
     }
 
     public boolean isHistorical() {

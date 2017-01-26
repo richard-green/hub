@@ -309,7 +309,7 @@ public class ClusterContentService implements ContentService {
         lastContentPath.delete(channelName, CHANNEL_LATEST_UPDATED);
         lastContentPath.delete(channelName, S3Verifier.LAST_SINGLE_VERIFIED);
         ChannelConfig channel = channelService.getCachedChannelConfig(channelName);
-        if (!channel.isSingle()) {
+        if (!channel.isBatch() || channel.isBoth()) {
             new S3Batch(channel, hubUtils).stop();
         }
     }
@@ -330,7 +330,7 @@ public class ClusterContentService implements ContentService {
         if (oldConfig == null) {
             lastContentPath.updateIncrease(ContentKey.NONE, newConfig.getName(), CHANNEL_LATEST_UPDATED);
         }
-        if (newConfig.isSingle()) {
+        if (newConfig.isSingle() || newConfig.isLargePayload()) {
             if (oldConfig != null && !oldConfig.isSingle()) {
                 new S3Batch(newConfig, hubUtils).stop();
             }

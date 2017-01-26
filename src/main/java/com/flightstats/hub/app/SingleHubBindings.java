@@ -25,7 +25,11 @@ class SingleHubBindings extends AbstractModule {
                 .annotatedWith(Names.named(ContentDao.CACHE))
                 .to(SpokeContentDao.class).asEagerSingleton();
         bind(ContentService.class)
+                .annotatedWith(Names.named(ContentService.SMALL_PAYLOAD))
                 .to(SingleContentService.class).asEagerSingleton();
+        bind(ContentService.class)
+                .annotatedWith(Names.named(ContentService.LARGE_PAYLOAD))
+                .to(UnsupportedContentService.class).asEagerSingleton();
         bind(ChannelTtlEnforcer.class).asEagerSingleton();
     }
 
