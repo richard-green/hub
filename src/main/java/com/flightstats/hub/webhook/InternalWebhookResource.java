@@ -8,6 +8,7 @@ import com.flightstats.hub.model.ContentPath;
 import org.joda.time.DateTime;
 
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -116,6 +117,13 @@ public class InternalWebhookResource {
             }
         });
         return Response.ok(root).build();
+    }
+
+    @POST
+    @Path("/deliver/{name}/{key}")
+    public Response deliver(@PathParam("name") String name,
+                            @PathParam("key") String key) {
+        return Response.accepted().build();
     }
 
     private void addLink(ObjectNode node, String key, String value) {

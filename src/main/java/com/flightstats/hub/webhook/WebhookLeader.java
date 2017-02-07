@@ -1,6 +1,7 @@
 package com.flightstats.hub.webhook;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flightstats.hub.app.HubProperties;
 import com.flightstats.hub.cluster.CuratorLeader;
 import com.flightstats.hub.cluster.LastContentPath;
 import com.flightstats.hub.cluster.Leader;
@@ -30,6 +31,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.UriBuilder;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -112,7 +115,8 @@ class WebhookLeader implements Leader {
                 while (leadership.hasLeadership()) {
                     Optional<ContentPath> nextOptional = webhookStrategy.next();
                     if (nextOptional.isPresent()) {
-                        send(nextOptional.get());
+//                        send(nextOptional.get());
+                        delegateDelivery(nextOptional.get());
                     }
                 }
             }
@@ -149,11 +153,22 @@ class WebhookLeader implements Leader {
                 } finally {
                     ActiveTraces.end();
                 }
-                send(contentPath);
+//                send(contentPath);
+                delegateDelivery(contentPath);
             } else {
                 webhookInProcess.remove(webhook.getName(), toSend);
             }
         }
+    }
+
+    private void delegateDelivery(ContentPath contentPath) {
+        logger.debug("delegating delivery of {}", contentPath);
+        URI deliveryURI = UriBuilder.fromUri(HubProperties.getAppUrl())
+                .path("deliver")
+                .path(webhook.getName())
+                .path(contentPath.toUrl())
+                .build();
+        ClientResponse response = client.resource(deliveryURI).post(ClientResponse.class);
     }
 
     private void send(ContentPath contentPath) throws InterruptedException {
